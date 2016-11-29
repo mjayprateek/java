@@ -1,13 +1,12 @@
 package com.adobe.initiation.server;
 
 import java.io.IOException;
+import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.adobe.initiation.interfaces.IServer;
 
 
 public class ServerStartup {
@@ -16,20 +15,26 @@ public class ServerStartup {
 
 	public static void main(String[] args) {
 		String hostname = getHostName(args);
-		int port = 8080;
+		int port = getPort(args);
+		int backlog = getBacklogConnections(args);
 		
-		Socket listeningSocket = null;
+		ServerSocket listeningSocket = null;
 		try {
-			listeningSocket = new Socket(hostname, port);
+			listeningSocket = new ServerSocket(port, backlog);
 			Server.getInstance().listen(listeningSocket);
 		} catch (UnknownHostException e) {
 			LOG.error("Invalid hostname: " + hostname + ". Exiting ...", e);
 			System.exit(1);
 		} catch (IOException e) {
-			LOG.error(String.format("Error while communicating with the socket with host: {0} and port {1}. Exiting ...", hostname, port), e);
+			LOG.error(String.format("Error while communicating with the socket with host: %s and port %s. Exiting ...", hostname, port), e);
 			System.exit(1);
 		}
 
+	}
+
+
+	private static int getBacklogConnections(String[] args) {
+		return 1;
 	}
 
 
@@ -38,7 +43,7 @@ public class ServerStartup {
 	}
 	
 	private static int getPort(String[] args) {
-		return 8080;
+		return 9000;
 	}
 	
 
