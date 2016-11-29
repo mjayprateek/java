@@ -16,64 +16,71 @@ public class HttpRequestParser {
 	
 	Logger LOG = LoggerFactory.getLogger(HttpRequestParser.class);
 	
-	private InputStream requestStream;
+	private BufferedReader br;
 	
-	public HttpRequestParser(InputStream requestStream) {
-		this.requestStream = requestStream;
+	public HttpRequestParser(BufferedReader br) {
+		this.br = br;
 	}
 	
 	public HttpRequest process() throws IOException {
 		
-		
-		BufferedReader br = new BufferedReader(new InputStreamReader(this.requestStream));
-		
-		Map<String, String> headers = new HashMap<String, String>();
-		String line = null;
-		int crlfCount = 0;
-		int msgBodyLength = 0;
-		int contentLength = HttpConstants.DEFAULT_CONTENT_LENGTH;
-		StringBuilder sb = new StringBuilder();
-		
-		while(HttpParserUtil.isCRLF((line = br.readLine()))) {;}
-		
-		line = br.readLine();
-		String[] requestLine = line.split("\\s");
-		String method = requestLine[0];
-		String requestURI = requestLine[1];
-		String httpVersion = requestLine[2];
-		
-		while((line=br.readLine())!=null) {
-			LOG.info(line);
+		try {
+			Map<String, String> headers = new HashMap<String, String>();
+			String line = null;
+			int crlfCount = 0;
+			int msgBodyLength = 0;
+			int contentLength = HttpConstants.DEFAULT_CONTENT_LENGTH;
+			boolean readBody = true;
 			
-			if(HttpParserUtil.isCRLF(line))
-				crlfCount+=1;
+			while(HttpParserUtil.isCRLF((line = br.readLine()))) {;}
 			
-			if(crlfCount==0) {
+			String[] requestLine = line.split("\\s");
+			String method = requestLine[0];
+			String requestURI = requestLine[1];
+			String httpVersion = requestLine[2];
+			StringBuilder sb = new StringBuilder();
+			
+			if(HttpParserUtil.methodDoesNotRequireBody(method))
+				readBody = false;
+			
+			while((line=br.readLine())!=null) {
+				LOG.info(line);
 				
-				String[] headerKeyValue = line.split(":");
-				String headerKey = headerKeyValue[0].trim();
-				String headerValue = headerKeyValue[1].trim();
-				headers.put(headerKey, headerValue);
-				if(HttpHeaders.contentLength.equals(headerKey)) {
-					contentLength = Integer.parseInt(headers.get(HttpHeaders.contentLength)); 
-				}
+				if(HttpParserUtil.isCRLF(line))
+					crlfCount+=1;
 				
-			} else {
-				if(HttpParserUtil.methodDoesNotRequireBody(method))
-					break;
-				
-				if(msgBodyLength < contentLength) {
-					sb.append(line);
-					msgBodyLength += line.length();
+				if(crlfCount==0) {
+					
+					String[] headerKeyValue = line.split(":");
+					String headerKey = headerKeyValue[0].trim();
+					String headerValue = headerKeyValue[1].trim();
+					headers.put(headerKey, headerValue);
+					if(HttpHeaders.contentLength.equals(headerKey)) {
+						contentLength = Integer.parseInt(headers.get(HttpHeaders.contentLength)); 
+					}
+					
 				} else {
-					break;
+					if(readBody) {
+						if(msgBodyLength < contentLength) {
+							sb.append(line);
+							msgBodyLength += "".equals(line) ? 2 : line.length();
+						} else {
+							break;
+						}
+					} else {
+						break;
+					}
+					
 				}
-				
 			}
+			
+			HttpRequest req = new HttpRequest(method, requestURI, headers, sb.toString());
+			req.setVersion(httpVersion);
+			return req;
+		} catch(IOException e) {
+			LOG.error("Error while parsing http request from the socket inputstream ", e);
+			return null;
 		}
 		
-		HttpRequest req = new HttpRequest(method, requestURI, headers, sb.toString());
-		req.setVersion(httpVersion);
-		return req;
 	}
 }

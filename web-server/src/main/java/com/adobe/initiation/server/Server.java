@@ -7,14 +7,12 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.adobe.initiation.http.parser.HttpHeaders;
-import com.adobe.initiation.http.parser.HttpParserUtil;
+import com.adobe.initiation.http.parser.HttpRequestParser;
+import com.adobe.initiation.http.request.HttpRequest;
 import com.adobe.initiation.interfaces.IServer;
 
 /**
@@ -54,12 +52,22 @@ public class Server implements IServer {
 			Socket s = serverSocket.accept();
 			//Create a new Thread and pass on the new socket to the thread
 			
+			BufferedReader br = new BufferedReader(new InputStreamReader(s.getInputStream()));
+			HttpRequest hr = new HttpRequestParser(br).process();
 			
+			BufferedWriter bw = null;
+			try {
+				bw = new BufferedWriter(new OutputStreamWriter(s.getOutputStream()));
+				bw.write("HTTP/1.1 200 OK\r\nHello World!\r\n");
+			} catch(IOException ioe) {
+				LOG.error("Error while writing response to the socket", ioe);
+			} finally {
+				bw.flush();
+				bw.close();
+			}
 			
-			BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(s.getOutputStream()));
-			bw.write("HTTP/1.1 200 OK\n\tHello, World!\n\t");
-			bw.flush();
-			bw.close();
+			br.close();
+			s.close();
 		}
 	}
 
