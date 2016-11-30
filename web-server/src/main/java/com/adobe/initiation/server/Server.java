@@ -7,12 +7,16 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.adobe.initiation.http.parser.HttpRequestParser;
 import com.adobe.initiation.http.request.HttpRequest;
+import com.adobe.initiation.server.configuration.ServerConfig;
+import com.adobe.initiation.thread.pool.task.HttpRequestProcessingTask;
 
 /**
  * This server class implements the IServer interface and 
@@ -27,16 +31,19 @@ public class Server implements IServer {
 	Logger LOG = LoggerFactory.getLogger(Server.class);
 	
 	private static Server server;
+	private ExecutorService executorService;
 	
-	private Server() {};
+	private Server(ExecutorService executorService) {
+		this.executorService = executorService;
+	}
 	
 	//This method is a thread-safe implementation of 
 	//the singleton pattern with late initialization
-	public static Server getInstance() {
+	public static Server instance() {
 		if(server==null) {
 			synchronized(Server.class) {
 				if(server==null) {
-					server = new Server();
+					server = new Server(Executors.newFixedThreadPool(ServerConfig.instance().numOfThreads()));
 					return server;
 				}
 			}
@@ -51,25 +58,14 @@ public class Server implements IServer {
 		boolean hasNotStopped = true;
 		while(hasNotStopped) {
 			Socket s = serverSocket.accept();
-			//Create a new Thread and pass on the new socket to the thread
 			
-			BufferedReader br = new BufferedReader(new InputStreamReader(s.getInputStream()));
-			HttpRequest hr = new HttpRequestParser(br).process();
+			//Create a new Thread and pass on the input and output streams of the socket for processing
+			executorService.execute(new HttpRequestProcessingTask(s.getInputStream(), s.getOutputStream()));
 			
-			BufferedWriter bw = null;
-			try {
-				bw = new BufferedWriter(new OutputStreamWriter(s.getOutputStream()));
-				bw.write("HTTP/1.1 200 OK\r\nHello World!\r\n");
-			} catch(IOException ioe) {
-				LOG.error("Error while writing response to the socket", ioe);
-			} finally {
-				bw.flush();
-				bw.close();
-			}
-			
-			br.close();
 			s.close();
 		}
 	}
+	
+	
 
 }

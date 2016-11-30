@@ -23,7 +23,7 @@ public class ServerStartup {
 		ServerSocket listeningSocket = null;
 		try {
 			listeningSocket = new ServerSocket(port, backlog);
-			Server.getInstance().listen(listeningSocket);
+			Server.instance().listen(listeningSocket);
 		} catch (UnknownHostException e) {
 			LOG.error("Invalid hostname: " + hostname + ". Exiting ...", e);
 			System.exit(1);
