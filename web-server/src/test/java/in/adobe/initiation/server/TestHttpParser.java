@@ -14,35 +14,71 @@ import com.adobe.initiation.http.parser.HttpMethods;
 import com.adobe.initiation.http.parser.HttpRequestParser;
 import com.adobe.initiation.http.request.HttpRequest;
 
+import in.adobe.initiation.server.builders.HttpRequestBuilder;
+
 public class TestHttpParser {
 	
-	private static final String CRLF = "\r\n";
-
 	@Test
 	public void parserReturnsCorrectHttpMethod() throws IOException {
-		String httpRequest = constructHttpGetRequest();
+		HttpRequestBuilder hrb = httpRequestBuilderWithBasicHeaders();
+		hrb.setMethod("GET");
+		hrb.setRequestURI("/hello");
+		String httpRequestStr = hrb.construct();
 
-		InputStream in = new ByteArrayInputStream(httpRequest.getBytes());
+		HttpRequest req = parseHttpRequest(httpRequestStr);
+		
+		assertEquals(HttpMethods.GET, req.getMethod());
+		assertEquals("HTTP/1.1", req.getVersion());
+		assertEquals("localhost:9000", req.getHeaderValue("Host"));
+		assertEquals("*/*", req.getHeaderValue("Accept"));
+		assertEquals("prateek-test", req.getHeaderValue("User-Agent"));
+	}
+	
+	@Test
+	public void parsesTheHttpRequestCorrectlyWithLeadingCRLFs() throws IOException {
+		HttpRequestBuilder hrb = httpRequestBuilderWithBasicHeaders();
+		hrb.setMethod("GET");
+		hrb.setRequestURI("/hello");
+		String httpRequestWithLeadingCRLFs = HttpRequestBuilder.CRLF
+				+ HttpRequestBuilder.CRLF
+				+ HttpRequestBuilder.CRLF
+				+ HttpRequestBuilder.CRLF
+				+ hrb.construct();
+
+		HttpRequest req = parseHttpRequest(httpRequestWithLeadingCRLFs);
+		
+		assertEquals(HttpMethods.GET, req.getMethod());
+		assertEquals(3, req.getHeaders().size());
+	}
+	
+	@Test
+	public void httpRequestDoesNotContainBodyIfTheMethodIsGet() throws IOException {
+		HttpRequestBuilder hrb = httpRequestBuilderWithBasicHeaders();
+		hrb.setMethod("GET");
+		hrb.setRequestURI("/hello");
+		String httpRequestStr = hrb.construct();
+
+		HttpRequest req = parseHttpRequest(httpRequestStr);
+		
+		assertEquals("", req.getContent());
+		assertEquals(0, req.getContentLength());
+	}
+
+	private HttpRequest parseHttpRequest(String httpRequestStr) throws IOException {
+		InputStream in = new ByteArrayInputStream(httpRequestStr.getBytes());
 		BufferedReader br = new BufferedReader(new InputStreamReader(in));
 		
 		HttpRequestParser hr = new HttpRequestParser(br);
 		HttpRequest req = hr.process();
-		
-		assertEquals(HttpMethods.GET, req.getMethod());
+		return req;
 	}
 
-	private String constructHttpGetRequest() {
-		StringBuilder sb = new StringBuilder();
-		sb.append("GET /hello HTTP/1.1");
-		sb.append(CRLF);
-		sb.append("Host: localhost:9000");
-		sb.append(CRLF);
-		sb.append("User-Agent: prateek-test");
-		sb.append(CRLF);
-		sb.append("Accept: */*");
-		sb.append(CRLF);
-		String httpRequest = sb.toString();
-		return httpRequest;
+	private HttpRequestBuilder httpRequestBuilderWithBasicHeaders() {
+		HttpRequestBuilder hrb = new HttpRequestBuilder();
+		hrb.setHttpVersion("HTTP/1.1");
+		hrb.addHeader("Host", "localhost:9000");
+		hrb.addHeader("User-Agent", "prateek-test");
+		hrb.addHeader("Accept", "*/*");
+		return hrb;
 	}
-	
 }

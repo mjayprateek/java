@@ -2,8 +2,6 @@ package com.adobe.initiation.http.parser;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -51,9 +49,9 @@ public class HttpRequestParser {
 				
 				if(crlfCount==0) {
 					
-					String[] headerKeyValue = line.split(":");
-					String headerKey = headerKeyValue[0].trim();
-					String headerValue = headerKeyValue[1].trim();
+					int indexOfColon = line.indexOf(':');
+					String headerKey = line.substring(0, indexOfColon).trim();
+					String headerValue = line.substring(indexOfColon+1).trim();
 					headers.put(headerKey, headerValue);
 					if(HttpHeaders.contentLength.equals(headerKey)) {
 						contentLength = Integer.parseInt(headers.get(HttpHeaders.contentLength)); 

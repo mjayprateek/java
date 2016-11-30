@@ -1,4 +1,4 @@
-package com.adobe.initiation.server;
+package com.adobe.initiation.server.startup;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -7,6 +7,8 @@ import java.net.UnknownHostException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.adobe.initiation.server.Server;
 
 
 public class ServerStartup {

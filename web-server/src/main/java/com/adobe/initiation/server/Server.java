@@ -13,7 +13,6 @@ import org.slf4j.LoggerFactory;
 
 import com.adobe.initiation.http.parser.HttpRequestParser;
 import com.adobe.initiation.http.request.HttpRequest;
-import com.adobe.initiation.interfaces.IServer;
 
 /**
  * This server class implements the IServer interface and 
@@ -31,6 +30,8 @@ public class Server implements IServer {
 	
 	private Server() {};
 	
+	//This method is a thread-safe implementation of 
+	//the singleton pattern with late initialization
 	public static Server getInstance() {
 		if(server==null) {
 			synchronized(Server.class) {

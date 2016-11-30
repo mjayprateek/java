@@ -17,7 +17,6 @@ public class HttpRequest {
 		this.requestURI = requestURI;
 		this.headers = headers;
 		this.content = content;
-		this.contentLength = content.length();
 	}
 
 	public HttpRequest() {
@@ -41,7 +40,7 @@ public class HttpRequest {
 	}
 
 	public int getContentLength() {
-		return contentLength;
+		return content==null ? 0 : content.length();
 	}
 
 	public void setMethod(String method) {
@@ -67,4 +66,9 @@ public class HttpRequest {
 	public String getHeaderValue(String key) {
 		return this.headers.get(key);
 	}
+
+	public Map<String, String> getHeaders() {
+		return headers;
+	}
+	
 }
