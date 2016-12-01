@@ -12,6 +12,7 @@ import java.net.Socket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.adobe.initiation.http.exception.InvalidRequestException;
 import com.adobe.initiation.http.parser.HttpRequestParser;
 import com.adobe.initiation.http.request.HttpRequest;
 
@@ -21,12 +22,14 @@ public class HttpRequestProcessingTask implements Runnable {
 
 	Logger LOG = LoggerFactory.getLogger(HttpRequestProcessingTask.class);
 
+	private Socket s;
 	private InputStream httpReqInputStream;
 	private OutputStream httpReqOutputStream;
 	
-	public HttpRequestProcessingTask(InputStream httpReqInputStream, OutputStream httpReqOutputStream) {
-		this.httpReqInputStream = httpReqInputStream;
-		this.httpReqOutputStream = httpReqOutputStream;
+	public HttpRequestProcessingTask(Socket s) throws IOException {
+		this.s = s;
+		this.httpReqInputStream = s.getInputStream();
+		this.httpReqOutputStream = s.getOutputStream();
 	}
 	
 	@Override
@@ -37,7 +40,11 @@ public class HttpRequestProcessingTask implements Runnable {
 		try {
 			hr = new HttpRequestParser(br).process();
 		} catch(IOException e) {
-			LOG.error("Error while parsing http request.", e);
+			LOG.error("Error while reading from the inputstream", e);
+			sendResponse("HTTP/1.1 400 Bad Request"+CRLF+"Hello World!"+CRLF);
+			return;
+		} catch(InvalidRequestException e) {
+			LOG.error("Error while parsing http request", e);
 			sendResponse("HTTP/1.1 400 Bad Request"+CRLF+"Hello World!"+CRLF);
 			return;
 		}
@@ -52,6 +59,12 @@ public class HttpRequestProcessingTask implements Runnable {
 			br.close();
 		} catch(IOException e) {
 			LOG.error("Error while closing the BufferedReader stream of the socket ", e);
+		}
+		
+		try {
+			this.s.close();
+		} catch (IOException e) {
+			LOG.error("Error while closing the socket ", e);
 		}
 	}
 

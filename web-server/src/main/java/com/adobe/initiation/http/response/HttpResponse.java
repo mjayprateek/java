@@ -5,16 +5,16 @@ import java.util.Map;
 
 public class HttpResponse {
 	
-	private String method;
-	private String requestURI;
+	private String statusCode;
+	private String reasonPhrase;
 	private String version;
-	private Map<String, String> headers = new HashMap<String, String>();
 	private String content;
 	private int contentLength;
+	private Map<String, String> headers = new HashMap<String, String>();
 	
-	public HttpResponse(String method, String requestURI, Map<String, String> headers, String content) {
-		this.method = method;
-		this.requestURI = requestURI;
+	public HttpResponse(String statusCode, String reasonPhrase, Map<String, String> headers, String content) {
+		this.statusCode = statusCode;
+		this.reasonPhrase = reasonPhrase;
 		this.headers = headers;
 		this.content = content;
 	}
@@ -22,17 +22,37 @@ public class HttpResponse {
 	public HttpResponse() {
 		// TODO Auto-generated constructor stub
 	}
-
-	public String getMethod() {
-		return method;
+	
+	public String getStatusCode() {
+		return statusCode;
 	}
 
-	public String getRequestURI() {
-		return requestURI;
+	public void setStatusCode(String statusCode) {
+		this.statusCode = statusCode;
+	}
+
+	public String getReasonPhrase() {
+		return reasonPhrase;
+	}
+
+	public void setReasonPhrase(String reasonPhrase) {
+		this.reasonPhrase = reasonPhrase;
 	}
 
 	public String getVersion() {
 		return version;
+	}
+
+	public void setVersion(String version) {
+		this.version = version;
+	}
+
+	public void setContentLength(int contentLength) {
+		this.contentLength = contentLength;
+	}
+
+	public void setHeaders(Map<String, String> headers) {
+		this.headers = headers;
 	}
 
 	public String getContent() {
@@ -41,18 +61,6 @@ public class HttpResponse {
 
 	public int getContentLength() {
 		return content==null ? 0 : content.length();
-	}
-
-	public void setMethod(String method) {
-		this.method = method;
-	}
-
-	public void setRequestURI(String requestURI) {
-		this.requestURI = requestURI;
-	}
-
-	public void setVersion(String version) {
-		this.version = version;
 	}
 
 	public void setContent(String content) {

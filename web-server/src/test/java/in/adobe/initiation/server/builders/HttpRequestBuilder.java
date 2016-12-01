@@ -3,9 +3,13 @@ package in.adobe.initiation.server.builders;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import in.adobe.initiation.server.TestHttpParser;
 
 public class HttpRequestBuilder {
+	Logger LOG = LoggerFactory.getLogger(HttpRequestBuilder.class);
 	public static final String CRLF = "\r\n";
 	
 	String method;
@@ -68,7 +72,10 @@ public class HttpRequestBuilder {
 		
 		sb.append(CRLF);
 		sb.append(msgbody);
+		sb.append(CRLF);
 		
-		return sb.toString();
+		String s = sb.toString();
+		
+		return s;
 	}
 }

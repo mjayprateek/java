@@ -9,6 +9,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,9 +61,7 @@ public class Server implements IServer {
 			Socket s = serverSocket.accept();
 			
 			//Create a new Thread and pass on the input and output streams of the socket for processing
-			executorService.execute(new HttpRequestProcessingTask(s.getInputStream(), s.getOutputStream()));
-			
-			s.close();
+			Future<?> result = executorService.submit(new HttpRequestProcessingTask(s));
 		}
 	}
 	
